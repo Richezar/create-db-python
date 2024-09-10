@@ -45,12 +45,10 @@ def change_client(conn, client_id, first_name=None, last_name=None, email=None, 
             sql_update_query = 'update client_phone set phone = %s where client_id = %s;'
             cur.execute(sql_update_query, (phones, client_id))
 
-
 def delete_phone(conn, client_id, phone):
     with conn.cursor() as cur:
         sql_update_query = 'delete from client_phone where client_id = %s and phone = %s;'
         cur.execute(sql_update_query, (client_id, phone))
-
 
 def delete_client(conn, client_id):
     with conn.cursor() as cur:
@@ -61,35 +59,12 @@ def delete_client(conn, client_id):
 
 def find_client(conn, first_name=None, last_name=None, email=None, phone=None):
     with conn.cursor() as cur:
-        if first_name != None:
-            sql_select_query = ("""select c.id, c.name, c.surname, c.email, cp.phone from client c, client_phone cp
-                                    where c.name = %s and cp.client_id = c.id
-                                    group by c.id, cp.phone;
+        sql_select_query = ("""select c.id, c.name, c.surname, c.email, cp.phone from client c
+                                    left join client_phone cp on c.id = cp.client_id
+                                    where c.name = %s or c.surname = %s or c.email = %s or cp.phone = %s
                                 """)
-            cur.execute(sql_select_query, (first_name,))
-            print(cur.fetchall())
-        if last_name != None:
-            sql_select_query = ("""select c.id, c.name, c.surname, c.email, cp.phone from client c, client_phone cp
-                                    where c.surname = %s and cp.client_id = c.id
-                                    group by c.id, cp.phone;
-                                            """)
-            cur.execute(sql_select_query, (last_name,))
-            print(cur.fetchall())
-        if email != None:
-            sql_select_query = ("""select c.id, c.name, c.surname, c.email, cp.phone from client c, client_phone cp
-                                    where c.email = %s and cp.client_id = c.id
-                                    group by c.id, cp.phone;
-                                            """)
-            cur.execute(sql_select_query, (email,))
-            print(cur.fetchall())
-        if phone != None:
-            sql_select_query = ("""select c.id, c.name, c.surname, c.email, cp.phone from client c, client_phone cp
-                                    where cp.phone = %s and cp.client_id = c.id
-                                    group by c.id, cp.phone;
-                                            """)
-            cur.execute(sql_select_query, (phone,))
-            print(cur.fetchall())
-
+        cur.execute(sql_select_query, (first_name, last_name, email, phone))
+        print(cur.fetchall())
 
 if __name__ == '__main__':
     with psycopg2.connect(database="test", user="postgres", password="postgres") as conn:
@@ -107,6 +82,6 @@ if __name__ == '__main__':
 
         delete_client(conn, 3)
 
-        find_client(conn, phone='+33')
+        find_client(conn, 'Anton')
 
     conn.close()
